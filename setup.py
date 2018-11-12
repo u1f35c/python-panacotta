@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import setuptools
 
@@ -29,7 +29,7 @@ setuptools.setup(
     description='Python API for controlling Panasonic Blu-Ray players',
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url='http://github.com/u1f35c/python-panacotta',
+    url='https://github.com/u1f35c/python-panacotta',
     packages=setuptools.find_packages(),
     scripts=[],
     classifiers=[
