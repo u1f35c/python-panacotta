@@ -137,3 +137,25 @@ class PanasonicBD:
             self._state = 'unknown'
 
         return [self._state, int(state[1]), int(status[4])]
+
+
+class PanasonicUB(PanasonicBD):
+    """Class to interact with newer Panasonic UB players."""
+
+    def get_status(self):
+        """Return a fake status.
+
+        These players do not support the CMD_GET_STATUS request, so we
+        just return a fake status so everything else works as
+        expected.
+
+        """
+        return ['1', '0', '0', '00000000', '0']
+
+    def send_key(self, key):
+        """Send a key (but not really).
+
+        These players do not accept the CMD_RC_* commands, so just always
+        return error.
+        """
+        return ['error', None]
