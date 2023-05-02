@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from enum import Enum
+
 import urllib.request
 
 # Must send these headers to not be ignored
@@ -39,13 +41,20 @@ KEYS = ['POWER', 'OP_CL',
         ]
 
 
+class PlayerVariant(Enum):
+    AUTO = 1
+    BD = 2
+    UB = 3
+
+
 class PanasonicBD:
     """Class to interact with Panasonic Blu-Ray Players."""
 
-    def __init__(self, host):
+    def __init__(self, host, variant=PlayerVariant.AUTO):
         self._host = host
         self._state = None
         self._duration = 0
+        self._variant = variant
 
     def send_cmd(self, url, data):
         req = urllib.request.Request(url, data, HEADERS)
@@ -71,20 +80,50 @@ class PanasonicBD:
         if key not in KEYS:
             return ['error', None]
 
+        # Check the player supports it
+        if self._variant == PlayerVariant.UB:
+            return ['error', None]
+
         url = 'http://%s/WAN/%s/%s_ctrl.cgi' % (self._host, 'dvdr', 'dvdr')
         data = ('cCMD_RC_%s.x=100&cCMD_RC_%s.y=100' % (key, key)).encode()
 
-        return self.send_cmd(url, data)
+        resp = self.send_cmd(url, data)
+        # If we're auto-detecting player type then assume we're an newer UB
+        # variant if we got an error, and an older BD if it worked
+        if self._variant == PlayerVariant.AUTO:
+            if resp[0] == 'error':
+                self._variant = PlayerVariant.UB
+                return ['error', None]
+            else:
+                self._variant = PlayerVariant.BD
+
+        return resp
 
     def get_status(self):
+        # Check the player supports it, return a dummy response if not
+        if self._variant == PlayerVariant.UB:
+            return ['1', '0', '0', '00000000', '0']
+
         url = 'http://%s/WAN/%s/%s_ctrl.cgi' % (self._host, 'dvdr', 'dvdr')
         data = b'cCMD_GET_STATUS.x=100&cCMD_GET_STATUS.y=100'
 
         resp = self.send_cmd(url, data)
+        if resp[0] == 'error':
+            # If we got an error and we're auto-detecting player type assume
+            # it's a more modern UB
+            if self._variant == PlayerVariant.AUTO:
+                self._variant = PlayerVariant.UB
+                return ['1', '0', '0', '00000000', '0']
+            else:
+                return ['error']
+
+        # If we get here and we're still auto-detecting player type we can
+        # assume an older BD variant.
+        if self._variant == PlayerVariant.AUTO:
+            self._variant = PlayerVariant.BD
+
         if resp[0] == 'off':
             return ['off']
-        elif resp[0] == 'error':
-            return ['error']
 
         # Response is of the form:
         #  2,0,0,248,0,1,8,2,0,00000000
