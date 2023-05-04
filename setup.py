@@ -23,7 +23,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name='panacotta',
-    version="0.1",
+    version="0.2",
     author='Jonathan McDowell',
     author_email='noodles@earth.li',
     description='Python API for controlling Panasonic Blu-Ray players',
